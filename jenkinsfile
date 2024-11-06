@@ -6,6 +6,8 @@ pipeline{
     }
     environment {
         SCANNER_HOME=tool 'sonar-scanner'
+        TRIVY_SKIP_UPDATE = 'true'  // Skips DB updates
+        TRIVY_CACHE_DIR = '/path/to/cache'  // Optional: specify cache path
     }
     stages {
         stage('clean workspace'){
