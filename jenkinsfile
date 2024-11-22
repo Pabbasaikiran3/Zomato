@@ -1,37 +1,35 @@
-pipeline {
+pipeline{
     agent any
-    tools {
+    tools{
         jdk 'jdk17'
         nodejs 'node16'
     }
     environment {
-        SCANNER_HOME = tool(name: 'sonar-scanner')
-        TRIVY_SKIP_UPDATE = 'true'  // Skips DB updates
-        TRIVY_CACHE_DIR = '/path/to/cache'  // Optional: specify cache path
+        SCANNER_HOME=tool 'sonar-scanner'
     }
     stages {
-        stage('Clean Workspace') {
-            steps {
+        stage('clean workspace'){
+            steps{
                 cleanWs()
             }
         }
-        stage('Checkout from Git') {
-            steps {
+        stage('Checkout from Git'){
+            steps{
                 git branch: 'main', url: 'https://github.com/Pabbasaikiran3/Zomato.git'
             }
         }
-        stage('SonarQube Analysis') {
-            steps {
+        stage("Sonarqube Analysis "){
+            steps{
                 withSonarQubeEnv('sonar-server') {
-                    sh '''$SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=zomato \
-                    -Dsonar.projectKey=zomato'''
+                    sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=zomato \
+                    -Dsonar.projectKey=zomato '''
                 }
             }
         }
-        stage('Quality Gate') {
-            steps {
+        stage("quality gate"){
+           steps {
                 script {
-                    waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token' 
+                    waitForQualityGate abortPipeline: false, credentialsId: 'Sonar-token' 
                 }
             } 
         }
@@ -51,24 +49,24 @@ pipeline {
                 sh "trivy fs . > trivyfs.txt"
             }
         }
-        stage('Docker Build & Push') {
-            steps {
-                script {
-                    withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {   
-                        sh "docker build -t zomato ."
-                        sh "docker tag zomato pabbasaikiran3/zomato:latest"
-                        sh "docker push pabbasaikiran3/zomato:latest"
+        stage("Docker Build & Push"){
+            steps{
+                script{
+                   withDockerRegistry(credentialsId: 'docker', toolName: 'docker'){   
+                       sh "docker build -t zomato ."
+                       sh "docker tag zomato pabbasaikiran3/zomato:latest "
+                       sh "docker push pabbasaikiran3/zomato:latest "
                     }
                 }
             }
         }
-        stage('TRIVY Image Scan') {
-            steps {
+        stage("TRIVY"){
+            steps{
                 sh "trivy image pabbasaikiran3/zomato:latest > trivy.txt" 
             }
         }
-        stage('Deploy to Container') {
-            steps {
+        stage('Deploy to container'){
+            steps{
                 sh 'docker run -d --name zomato -p 3000:3000 pabbasaikiran3/zomato:latest'
             }
         }
